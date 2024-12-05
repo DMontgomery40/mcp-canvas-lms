@@ -3,6 +3,15 @@
   "version": "0.2.5",
   "type": "module",
   "main": "build/index.js",
+  "bin": {
+    "canvas-mcp-server": "./build/index.js"
+  },
+  "mcp": {
+    "server": {
+      "command": "node",
+      "args": ["./build/index.js"]
+    }
+  },
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
