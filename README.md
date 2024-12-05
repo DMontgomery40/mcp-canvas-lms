@@ -73,7 +73,7 @@ Restart Claude Desktop
    Start Claude Desktop again.
    Navigate to the 🔌 menu to find and connect your Canvas MCP server.
 
-### Available Tools
+### Available Tools (more student focused stuff coming soon)
 
 - `canvas_create_course`: Create a new course in Canvas.
 - `canvas_update_course`: Update an existing course in Canvas.
