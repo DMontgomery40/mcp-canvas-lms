@@ -48,6 +48,19 @@ export interface CanvasUser {
   readonly avatar_url: string;
 }
 
+export interface CanvasUserProfile {
+  id: number;
+  name: string;
+  sortable_name: string;
+  short_name: string;
+  sis_user_id: string | null;
+  login_id: string;
+  avatar_url: string;
+  primary_email: string;
+  locale: string;
+  bio: string | null;
+}
+
 export interface CanvasCourse {
   readonly id: CourseId;
   readonly name: string;
@@ -133,6 +146,69 @@ export interface CanvasGrades {
   readonly final_grade: string | null;
 }
 
+export interface CanvasDiscussionTopic {
+  id: number;
+  title: string;
+  message: string;
+  html_url: string;
+  posted_at: string;
+  assignment_id: number | null;
+  discussion_type: string;
+}
+
+export interface CanvasModule {
+  id: number;
+  name: string;
+  position: number;
+  unlock_at: string | null;
+  require_sequential_progress: boolean;
+  state: string;
+}
+
+export interface CanvasModuleItem {
+  id: number;
+  title: string;
+  type: string;
+  html_url: string;
+  content_id?: number;
+}
+
+export interface CanvasQuiz {
+  id: number;
+  title: string;
+  html_url: string;
+  quiz_type: string;
+  time_limit: number | null;
+  published: boolean;
+  description: string | null;
+  due_at: string | null;
+}
+
+export interface CanvasAnnouncement {
+  id: number;
+  title: string;
+  message: string;
+  posted_at: string;
+  html_url: string;
+}
+
+export interface CanvasScope {
+  resource: string;
+  resource_name: string;
+  controller: string;
+  action: string;
+  verb: string;
+  scope: string;
+}
+
+export interface CanvasAssignmentSubmission {
+  id: number;
+  submission_type: string;
+  body?: string;
+  submitted_at: string | null;
+  // Add other relevant properties based on Canvas API
+}
+
 /**
  * Tool input types with strict validation
  */
@@ -187,50 +263,4 @@ export interface EnrollUserArgs {
   user_id: number;
   role?: string;
   enrollment_state?: string;
-}
-
-/**
- * Configuration types
- */
-export interface CanvasClientConfig {
-  readonly token: string;
-  readonly domain: string;
-  readonly timeout?: number;
-  readonly retryAttempts?: number;
-  readonly rateLimitPerSecond?: number;
-}
-
-/**
- * Validation utilities
- */
-export function isValidId(id: number): boolean {
-  return Number.isInteger(id) && id > 0;
-}
-
-export function validateCourseId(id: number): CourseId {
-  if (!isValidId(id)) {
-    throw new CanvasValidationError(`Invalid course ID: ${id}`);
-  }
-  return id as CourseId;
-}
-
-export function validateAssignmentId(id: number): AssignmentId {
-  if (!isValidId(id)) {
-    throw new CanvasValidationError(`Invalid assignment ID: ${id}`);
-  }
-  return id as AssignmentId;
-}
-
-export function validateUserId(id: number): UserId {
-  if (!isValidId(id)) {
-    throw new CanvasValidationError(`Invalid user ID: ${id}`);
-  }
-  return id as UserId;
-}
-
-export function validateEnrollmentId(id: number): EnrollmentId {
-  if (!isValidId(id)) {
-    throw new CanvasValidationError(`Invalid enrollment ID: ${id}`);
-  }
-  return id as EnrollmentId;
 }

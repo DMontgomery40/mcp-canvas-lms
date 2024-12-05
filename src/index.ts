@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 // src/index.ts
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -19,7 +20,8 @@ import {
   UpdateAssignmentArgs,
   SubmitGradeArgs,
   EnrollUserArgs,
-  CanvasCourse
+  CanvasCourse,
+  CanvasAssignmentSubmission
 } from "./types.js";
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -141,6 +143,21 @@ const TOOLS: Tool[] = [
       },
       required: ["course_id", "user_id"]
     }
+  },
+  {
+    name: "canvas_submit_assignment",
+    description: "Submit an assignment in Canvas",
+    inputSchema: {
+      type: "object",
+      properties: {
+        course_id: { type: "number", description: "ID of the course" },
+        assignment_id: { type: "number", description: "ID of the assignment" },
+        user_id: { type: "number", description: "ID of the student" },
+        submission_type: { type: "string", description: "Type of submission (e.g., online_upload)" },
+        body: { type: "string", description: "Submission body or file URL" }
+      },
+      required: ["course_id", "assignment_id", "user_id", "submission_type"]
+    }
   }
 ];
 
@@ -215,6 +232,30 @@ class CanvasMCPServer {
             name: `Grades: ${course.name}`,
             description: `Grade data for ${course.name}`,
             mimeType: "application/json"
+          })),
+          ...courses.map((course: CanvasCourse) => ({
+            uri: `quizzes://${course.id}`,
+            name: `Quizzes: ${course.name}`,
+            description: `Quizzes for ${course.name}`,
+            mimeType: "application/json"
+          })),
+          ...courses.map((course: CanvasCourse) => ({
+            uri: `modules://${course.id}`,
+            name: `Modules: ${course.name}`,
+            description: `Modules for ${course.name}`,
+            mimeType: "application/json"
+          })),
+          ...courses.map((course: CanvasCourse) => ({
+            uri: `discussion_topics://${course.id}`,
+            name: `Discussion Topics: ${course.name}`,
+            description: `Discussion topics for ${course.name}`,
+            mimeType: "application/json"
+          })),
+          ...courses.map((course: CanvasCourse) => ({
+            uri: `announcements://${course.id}`,
+            name: `Announcements: ${course.name}`,
+            description: `Announcements for ${course.name}`,
+            mimeType: "application/json"
           }))
         ]
       };
@@ -250,6 +291,26 @@ class CanvasMCPServer {
           
           case "grades": {
             content = await this.client.getCourseGrades(parseInt(id));
+            break;
+          }
+
+          case "quizzes": {
+            content = await this.client.listQuizzes(parseInt(id));
+            break;
+          }
+
+          case "modules": {
+            content = await this.client.listModules(parseInt(id));
+            break;
+          }
+
+          case "discussion_topics": {
+            content = await this.client.listDiscussionTopics(parseInt(id));
+            break;
+          }
+
+          case "announcements": {
+            content = await this.client.listAnnouncements(parseInt(id));
             break;
           }
           
@@ -347,6 +408,33 @@ class CanvasMCPServer {
               content: [{ type: "text", text: JSON.stringify(enrollment, null, 2) }]
             };
           }
+
+          case "canvas_submit_assignment": {
+            const submitArgs = args as unknown as {
+              course_id: number;
+              assignment_id: number;
+              user_id: number;
+              submission_type: string;
+              body?: string;
+            };
+            const { course_id, assignment_id, user_id, submission_type, body } = submitArgs;
+
+            if (!course_id || !assignment_id || !user_id || !submission_type) {
+              throw new Error("Missing required fields for assignment submission");
+            }
+
+            const submission = await this.client.submitAssignment({
+              course_id,
+              assignment_id,
+              user_id,
+              submission_type,
+              body
+            });
+
+            return {
+              content: [{ type: "text", text: JSON.stringify(submission, null, 2) }]
+            };
+          }
           
           default:
             throw new Error(`Unknown tool: ${request.params.name}`);
@@ -384,8 +472,8 @@ async function main() {
   const envPaths = [
     '.env',                          // Current directory
     'src/.env',                      // src directory
-    `${__dirname}/.env`,             // Script directory
-    `${process.cwd()}/.env`,         // Working directory
+    path.join(__dirname, '.env'),    // Script directory
+    path.join(process.cwd(), '.env'), // Working directory
     ...pathDirs.map(dir => path.join(dir, '.env')), // All PATH directories
   ];
 
