@@ -370,7 +370,7 @@ class CanvasMCPServer {
 
 // Main entry point
 async function main() {
-  dotenv.config();
+  dotenv.config({ path: './src/.env' });
 
   const token = process.env.CANVAS_API_TOKEN;
   const domain = process.env.CANVAS_DOMAIN;
