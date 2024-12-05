@@ -54,18 +54,10 @@ Build the Project
    Add the MCP server configuration to your claude_desktop_config.json:
 
 ```
-{
-  "mcpServers": {
-    "canvas": {
-      "command": "node",
-      "args": ["./build/index.js"],
-      "env": {
-        "CANVAS_API_TOKEN": "your_canvas_api_token",
-        "CANVAS_DOMAIN": "your_canvas_domain"
-      }
-    }
-  }
-}
+  "canvas-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "canvas-mcp-server"]
+    },
 ```
 Restart Claude Desktop
 
