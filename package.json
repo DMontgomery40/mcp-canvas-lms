@@ -1,6 +1,6 @@
 {
   "name": "canvas-mcp-server",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "type": "module",
   "main": "build/index.js",
   "bin": {
@@ -9,7 +9,9 @@
   "mcp": {
     "server": {
       "command": "node",
-      "args": ["./build/index.js"]
+      "args": [
+        "./build/index.js"
+      ]
     }
   },
   "scripts": {
