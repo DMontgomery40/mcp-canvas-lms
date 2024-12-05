@@ -11,7 +11,7 @@ import {
   Tool
 } from "@modelcontextprotocol/sdk/types.js";
 import { CanvasClient } from "./client.js";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import {
   CreateCourseArgs,
   UpdateCourseArgs,
@@ -21,6 +21,9 @@ import {
   EnrollUserArgs,
   CanvasCourse
 } from "./types.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 // Define the tools
 const TOOLS: Tool[] = [
@@ -370,6 +373,10 @@ class CanvasMCPServer {
 
 // Main entry point
 async function main() {
+  // Get current file's directory in ES modules
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+
   // Get all directories from PATH
   const pathDirs = (process.env.PATH || '').split(path.delimiter);
   

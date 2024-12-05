@@ -4,7 +4,10 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListResourcesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { CanvasClient } from "./client.js";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 // Define the tools
 const TOOLS = [
     {
@@ -322,7 +325,32 @@ class CanvasMCPServer {
 }
 // Main entry point
 async function main() {
-    dotenv.config({ path: './src/.env' });
+    // Get current file's directory in ES modules
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    // Get all directories from PATH
+    const pathDirs = (process.env.PATH || '').split(path.delimiter);
+    // Create array of possible .env locations
+    const envPaths = [
+        '.env', // Current directory
+        'src/.env', // src directory
+        `${__dirname}/.env`, // Script directory
+        `${process.cwd()}/.env`, // Working directory
+        ...pathDirs.map(dir => path.join(dir, '.env')), // All PATH directories
+    ];
+    // Try loading from each possible location
+    let loaded = false;
+    for (const envPath of envPaths) {
+        const result = dotenv.config({ path: envPath });
+        if (result.parsed) {
+            console.error(`Loaded environment from: ${envPath}`);
+            loaded = true;
+            break;
+        }
+    }
+    if (!loaded) {
+        console.error('Warning: No .env file found in PATH or standard locations');
+    }
     const token = process.env.CANVAS_API_TOKEN;
     const domain = process.env.CANVAS_DOMAIN;
     if (!token || !domain) {

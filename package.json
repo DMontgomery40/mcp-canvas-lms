@@ -4,13 +4,26 @@
   "type": "module",
   "main": "build/index.js",
   "scripts": {
-    "build": "tsc && chmod +x build/index.js",
+    "build": "tsc",
     "start": "node build/index.js",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "publish": "npm publish --access public"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DMontgomery40/meta-mcp-server.git"
+  },
+  "keywords": [
+    "canvas lms",
+    "mcp",
+    "server",
+    "modelcontextprotocol"
+  ],
+  "author": "David Montgomery",
+  "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "latest"
+    "@modelcontextprotocol/sdk": "latest",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
