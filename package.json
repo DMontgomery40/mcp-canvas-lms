@@ -1,16 +1,16 @@
 {
   "name": "canvas-mcp-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "main": "build/index.js",
   "scripts": {
     "build": "tsc && chmod +x build/index.js",
     "start": "node build/index.js",
-    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "publish": "npm publish --access public"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "dotenv": "^16.4.7"
+    "@modelcontextprotocol/sdk": "latest"
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
