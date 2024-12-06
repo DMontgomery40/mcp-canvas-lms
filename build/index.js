@@ -137,7 +137,164 @@ const TOOLS = [
                 submission_type: { type: "string", description: "Type of submission (e.g., online_upload)" },
                 body: { type: "string", description: "Submission body or file URL" }
             },
-            required: ["course_id", "assignment_id", "user_id", "submission_type"]
+            required: [
+                "course_id",
+                "assignment_id",
+                "user_id",
+                "submission_type"
+            ]
+        }
+    },
+    {
+        name: "canvas_list_quizzes",
+        description: "List all quizzes in a course",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" }
+            },
+            required: ["course_id"]
+        }
+    },
+    {
+        name: "canvas_get_quiz",
+        description: "Get details of a specific quiz",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" },
+                quiz_id: { type: "number", description: "ID of the quiz" }
+            },
+            required: ["course_id", "quiz_id"]
+        }
+    },
+    {
+        name: "canvas_create_quiz",
+        description: "Create a new quiz in a course",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" },
+                title: { type: "string", description: "Title of the quiz" },
+                quiz_type: { type: "string", description: "Type of the quiz (e.g., graded)" },
+                time_limit: { type: "number", description: "Time limit in minutes" },
+                published: { type: "boolean", description: "Is the quiz published" },
+                description: { type: "string", description: "Description of the quiz" },
+                due_at: { type: "string", description: "Due date (ISO format)" }
+            },
+            required: ["course_id", "title"]
+        }
+    },
+    {
+        name: "canvas_update_quiz",
+        description: "Update an existing quiz",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" },
+                quiz_id: { type: "number", description: "ID of the quiz to update" },
+                title: { type: "string", description: "New title of the quiz" },
+                quiz_type: { type: "string", description: "New type of the quiz" },
+                time_limit: { type: "number", description: "New time limit in minutes" },
+                published: { type: "boolean", description: "Is the quiz published" },
+                description: { type: "string", description: "New description of the quiz" },
+                due_at: { type: "string", description: "New due date (ISO format)" }
+            },
+            required: ["course_id", "quiz_id"]
+        }
+    },
+    {
+        name: "canvas_delete_quiz",
+        description: "Delete a quiz from a course",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" },
+                quiz_id: { type: "number", description: "ID of the quiz to delete" }
+            },
+            required: ["course_id", "quiz_id"]
+        }
+    },
+    {
+        name: "canvas_list_modules",
+        description: "List all modules in a course",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" }
+            },
+            required: ["course_id"]
+        }
+    },
+    {
+        name: "canvas_get_module",
+        description: "Get details of a specific module",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" },
+                module_id: { type: "number", description: "ID of the module" }
+            },
+            required: ["course_id", "module_id"]
+        }
+    },
+    {
+        name: "canvas_list_module_items",
+        description: "List all items in a module",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" },
+                module_id: { type: "number", description: "ID of the module" }
+            },
+            required: ["course_id", "module_id"]
+        }
+    },
+    {
+        name: "canvas_get_module_item",
+        description: "Get details of a specific module item",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" },
+                module_id: { type: "number", description: "ID of the module" },
+                item_id: { type: "number", description: "ID of the module item" }
+            },
+            required: ["course_id", "module_id", "item_id"]
+        }
+    },
+    {
+        name: "canvas_list_discussion_topics",
+        description: "List all discussion topics in a course",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" }
+            },
+            required: ["course_id"]
+        }
+    },
+    {
+        name: "canvas_get_discussion_topic",
+        description: "Get details of a specific discussion topic",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" },
+                topic_id: { type: "number", description: "ID of the discussion topic" }
+            },
+            required: ["course_id", "topic_id"]
+        }
+    },
+    {
+        name: "canvas_list_announcements",
+        description: "List all announcements in a course",
+        inputSchema: {
+            type: "object",
+            properties: {
+                course_id: { type: "number", description: "ID of the course" }
+            },
+            required: ["course_id"]
         }
     }
 ];
@@ -371,6 +528,126 @@ class CanvasMCPServer {
                         });
                         return {
                             content: [{ type: "text", text: JSON.stringify(submission, null, 2) }]
+                        };
+                    }
+                    case "canvas_list_quizzes": {
+                        const { course_id } = args;
+                        if (!course_id) {
+                            throw new Error("Missing required field: course_id");
+                        }
+                        const quizzes = await this.client.listQuizzes(course_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(quizzes, null, 2) }]
+                        };
+                    }
+                    case "canvas_get_quiz": {
+                        const { course_id, quiz_id } = args;
+                        if (!course_id || !quiz_id) {
+                            throw new Error("Missing required fields: course_id and quiz_id");
+                        }
+                        const quiz = await this.client.getQuiz(course_id, quiz_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(quiz, null, 2) }]
+                        };
+                    }
+                    case "canvas_create_quiz": {
+                        const { course_id, title, quiz_type, time_limit, published, description, due_at } = args;
+                        if (!course_id || !title) {
+                            throw new Error("Missing required fields: course_id and title");
+                        }
+                        const quiz = await this.client.createQuiz(course_id, { title, quiz_type, time_limit, published, description, due_at });
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(quiz, null, 2) }]
+                        };
+                    }
+                    case "canvas_update_quiz": {
+                        const { course_id, quiz_id, title, quiz_type, time_limit, published, description, due_at } = args;
+                        if (!course_id || !quiz_id) {
+                            throw new Error("Missing required fields: course_id and quiz_id");
+                        }
+                        const updatedQuiz = await this.client.updateQuiz(course_id, quiz_id, { title, quiz_type, time_limit, published, description, due_at });
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(updatedQuiz, null, 2) }]
+                        };
+                    }
+                    case "canvas_delete_quiz": {
+                        const { course_id, quiz_id } = args;
+                        if (!course_id || !quiz_id) {
+                            throw new Error("Missing required fields: course_id and quiz_id");
+                        }
+                        await this.client.deleteQuiz(course_id, quiz_id);
+                        return {
+                            content: [{ type: "text", text: `Quiz ${quiz_id} deleted successfully.` }]
+                        };
+                    }
+                    case "canvas_list_modules": {
+                        const { course_id } = args;
+                        if (!course_id) {
+                            throw new Error("Missing required field: course_id");
+                        }
+                        const modules = await this.client.listModules(course_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(modules, null, 2) }]
+                        };
+                    }
+                    case "canvas_get_module": {
+                        const { course_id, module_id } = args;
+                        if (!course_id || !module_id) {
+                            throw new Error("Missing required fields: course_id and module_id");
+                        }
+                        const module = await this.client.getModule(course_id, module_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(module, null, 2) }]
+                        };
+                    }
+                    case "canvas_list_module_items": {
+                        const { course_id, module_id } = args;
+                        if (!course_id || !module_id) {
+                            throw new Error("Missing required fields: course_id and module_id");
+                        }
+                        const items = await this.client.listModuleItems(course_id, module_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(items, null, 2) }]
+                        };
+                    }
+                    case "canvas_get_module_item": {
+                        const { course_id, module_id, item_id } = args;
+                        if (!course_id || !module_id || !item_id) {
+                            throw new Error("Missing required fields: course_id, module_id, and item_id");
+                        }
+                        const item = await this.client.getModuleItem(course_id, module_id, item_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(item, null, 2) }]
+                        };
+                    }
+                    case "canvas_list_discussion_topics": {
+                        const { course_id } = args;
+                        if (!course_id) {
+                            throw new Error("Missing required field: course_id");
+                        }
+                        const topics = await this.client.listDiscussionTopics(course_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(topics, null, 2) }]
+                        };
+                    }
+                    case "canvas_get_discussion_topic": {
+                        const { course_id, topic_id } = args;
+                        if (!course_id || !topic_id) {
+                            throw new Error("Missing required fields: course_id and topic_id");
+                        }
+                        const topic = await this.client.getDiscussionTopic(course_id, topic_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(topic, null, 2) }]
+                        };
+                    }
+                    case "canvas_list_announcements": {
+                        const { course_id } = args;
+                        if (!course_id) {
+                            throw new Error("Missing required field: course_id");
+                        }
+                        const announcements = await this.client.listAnnouncements(course_id);
+                        return {
+                            content: [{ type: "text", text: JSON.stringify(announcements, null, 2) }]
                         };
                     }
                     default:
