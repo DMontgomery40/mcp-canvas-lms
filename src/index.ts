@@ -263,7 +263,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        course_id: { type: "number", description: "ID of the course" },
+        course_id: { type: "string", description: "ID of the course" },
         module_id: { type: "number", description: "ID of the module" }
       },
       required: ["course_id", "module_id"]
