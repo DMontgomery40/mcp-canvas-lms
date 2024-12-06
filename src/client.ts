@@ -288,8 +288,7 @@ export class CanvasClient {
   // ---------------------
   // ANNOUNCEMENTS
   // ---------------------
-  async listAnnouncements(courseId: number): Promise<CanvasAnnouncement[]> {
-    // Announcements are discussion topics with type 'announcement'
+  async listAnnouncements(courseId: string): Promise<CanvasAnnouncement[]> {
     const response = await this.client.get(`/courses/${courseId}/discussion_topics`, {
       params: {
         type: 'announcement'
@@ -301,12 +300,12 @@ export class CanvasClient {
   // ---------------------
   // QUIZZES
   // ---------------------
-  async listQuizzes(courseId: number): Promise<CanvasQuiz[]> {
+  async listQuizzes(courseId: string): Promise<CanvasQuiz[]> {
     const response = await this.client.get(`/courses/${courseId}/quizzes`);
     return response.data;
   }
 
-  async getQuiz(courseId: number, quizId: number): Promise<CanvasQuiz> {
+  async getQuiz(courseId: string, quizId: number): Promise<CanvasQuiz> {
     const response = await this.client.get(`/courses/${courseId}/quizzes/${quizId}`);
     return response.data;
   }
@@ -368,7 +367,7 @@ export class CanvasClient {
   // ASSIGNMENT SUBMISSIONS
   // ---------------------
   async submitAssignment(args: {
-    course_id: number;
+    course_id: string;
     assignment_id: number;
     user_id: number;
     submission_type: string;

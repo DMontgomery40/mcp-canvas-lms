@@ -221,7 +221,6 @@ export class CanvasClient {
     // ANNOUNCEMENTS
     // ---------------------
     async listAnnouncements(courseId) {
-        // Announcements are discussion topics with type 'announcement'
         const response = await this.client.get(`/courses/${courseId}/discussion_topics`, {
             params: {
                 type: 'announcement'

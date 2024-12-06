@@ -275,7 +275,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        course_id: { type: "number", description: "ID of the course" },
+        course_id: { type: "string", description: "ID of the course" },
         module_id: { type: "number", description: "ID of the module" },
         item_id: { type: "number", description: "ID of the module item" }
       },
@@ -288,7 +288,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        course_id: { type: "number", description: "ID of the course" }
+        course_id: { type: "string", description: "ID of the course" }
       },
       required: ["course_id"]
     }
@@ -299,7 +299,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        course_id: { type: "number", description: "ID of the course" },
+        course_id: { type: "string", description: "ID of the course" },
         topic_id: { type: "number", description: "ID of the discussion topic" }
       },
       required: ["course_id", "topic_id"]
@@ -311,7 +311,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        course_id: { type: "number", description: "ID of the course" }
+        course_id: { type: "string", description: "ID or URL of the course" }
       },
       required: ["course_id"]
     }
@@ -452,7 +452,7 @@ class CanvasMCPServer {
           }
 
           case "quizzes": {
-            content = await this.client.listQuizzes(parseInt(id));
+            content = await this.client.listQuizzes(id);
             break;
           }
 
@@ -467,7 +467,7 @@ class CanvasMCPServer {
           }
 
           case "announcements": {
-            content = await this.client.listAnnouncements(parseInt(id));
+            content = await this.client.listAnnouncements(id);
             break;
           }
           
@@ -568,7 +568,7 @@ class CanvasMCPServer {
 
           case "canvas_submit_assignment": {
             const submitArgs = args as unknown as {
-              course_id: number;
+              course_id: string;
               assignment_id: number;
               user_id: number;
               submission_type: string;
@@ -594,7 +594,7 @@ class CanvasMCPServer {
           }
 
           case "canvas_list_quizzes": {
-            const { course_id } = args as { course_id: number };
+            const { course_id } = args as { course_id: string };
             if (!course_id) {
               throw new Error("Missing required field: course_id");
             }
@@ -605,7 +605,7 @@ class CanvasMCPServer {
           }
 
           case "canvas_get_quiz": {
-            const { course_id, quiz_id } = args as { course_id: number; quiz_id: number };
+            const { course_id, quiz_id } = args as { course_id: string; quiz_id: number };
             if (!course_id || !quiz_id) {
               throw new Error("Missing required fields: course_id and quiz_id");
             }
@@ -732,7 +732,7 @@ class CanvasMCPServer {
           }
 
           case "canvas_list_announcements": {
-            const { course_id } = args as { course_id: number };
+            const { course_id } = args as { course_id: string };
             if (!course_id) {
               throw new Error("Missing required field: course_id");
             }

@@ -244,7 +244,7 @@ const TOOLS = [
         inputSchema: {
             type: "object",
             properties: {
-                course_id: { type: "number", description: "ID of the course" },
+                course_id: { type: "string", description: "ID of the course" },
                 module_id: { type: "number", description: "ID of the module" }
             },
             required: ["course_id", "module_id"]
@@ -256,7 +256,7 @@ const TOOLS = [
         inputSchema: {
             type: "object",
             properties: {
-                course_id: { type: "number", description: "ID of the course" },
+                course_id: { type: "string", description: "ID of the course" },
                 module_id: { type: "number", description: "ID of the module" },
                 item_id: { type: "number", description: "ID of the module item" }
             },
@@ -269,7 +269,7 @@ const TOOLS = [
         inputSchema: {
             type: "object",
             properties: {
-                course_id: { type: "number", description: "ID of the course" }
+                course_id: { type: "string", description: "ID of the course" }
             },
             required: ["course_id"]
         }
@@ -280,7 +280,7 @@ const TOOLS = [
         inputSchema: {
             type: "object",
             properties: {
-                course_id: { type: "number", description: "ID of the course" },
+                course_id: { type: "string", description: "ID of the course" },
                 topic_id: { type: "number", description: "ID of the discussion topic" }
             },
             required: ["course_id", "topic_id"]
@@ -292,7 +292,7 @@ const TOOLS = [
         inputSchema: {
             type: "object",
             properties: {
-                course_id: { type: "number", description: "ID of the course" }
+                course_id: { type: "string", description: "ID or URL of the course" }
             },
             required: ["course_id"]
         }
@@ -412,7 +412,7 @@ class CanvasMCPServer {
                         break;
                     }
                     case "quizzes": {
-                        content = await this.client.listQuizzes(parseInt(id));
+                        content = await this.client.listQuizzes(id);
                         break;
                     }
                     case "modules": {
@@ -424,7 +424,7 @@ class CanvasMCPServer {
                         break;
                     }
                     case "announcements": {
-                        content = await this.client.listAnnouncements(parseInt(id));
+                        content = await this.client.listAnnouncements(id);
                         break;
                     }
                     default:

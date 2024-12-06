@@ -30,9 +30,9 @@ export declare class CanvasClient {
     getModuleItem(courseId: number, moduleId: number, itemId: number): Promise<CanvasModuleItem>;
     listDiscussionTopics(courseId: number): Promise<CanvasDiscussionTopic[]>;
     getDiscussionTopic(courseId: number, topicId: number): Promise<CanvasDiscussionTopic>;
-    listAnnouncements(courseId: number): Promise<CanvasAnnouncement[]>;
-    listQuizzes(courseId: number): Promise<CanvasQuiz[]>;
-    getQuiz(courseId: number, quizId: number): Promise<CanvasQuiz>;
+    listAnnouncements(courseId: string): Promise<CanvasAnnouncement[]>;
+    listQuizzes(courseId: string): Promise<CanvasQuiz[]>;
+    getQuiz(courseId: string, quizId: number): Promise<CanvasQuiz>;
     createQuiz(courseId: number, quizData: Partial<CanvasQuiz>): Promise<CanvasQuiz>;
     updateQuiz(courseId: number, quizId: number, quizData: Partial<CanvasQuiz>): Promise<CanvasQuiz>;
     deleteQuiz(courseId: number, quizId: number): Promise<void>;
@@ -47,7 +47,7 @@ export declare class CanvasClient {
      */
     listTokenScopes(accountId: number, groupBy?: string): Promise<CanvasScope[]>;
     submitAssignment(args: {
-        course_id: number;
+        course_id: string;
         assignment_id: number;
         user_id: number;
         submission_type: string;
