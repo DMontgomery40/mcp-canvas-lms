@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/dmontgomery40-mcp-canvas-lms-badge.png)](https://mseep.ai/app/dmontgomery40-mcp-canvas-lms)
+
 
 # Canvas MCP Server
 
