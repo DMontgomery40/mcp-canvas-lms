@@ -1,6 +1,6 @@
 // src/client.ts
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import { 
   CanvasCourse, 
   CanvasAssignment,
@@ -85,14 +85,25 @@ export class CanvasClient {
         const contentType = headers['content-type'] || '';
 
         // Only handle pagination for JSON responses
+        // Use axios directly (not this.client) to avoid recursive interceptor calls
         if (Array.isArray(data) && linkHeader && contentType.includes('application/json')) {
           let allData = [...data];
           let nextUrl = this.getNextPageUrl(linkHeader);
+          const paginationConfig: AxiosRequestConfig = {
+            headers: {
+              'Authorization': response.config.headers['Authorization'] as string,
+              'Content-Type': 'application/json'
+            },
+            timeout: 30000
+          };
 
           while (nextUrl) {
-            const nextResponse = await this.client.get(nextUrl);
+            console.error(`[Canvas API] GET ${nextUrl}`);
+            const nextResponse = await axios.get(nextUrl, paginationConfig);
             allData = [...allData, ...nextResponse.data];
-            nextUrl = this.getNextPageUrl(nextResponse.headers.link);
+            nextUrl = nextResponse.headers.link
+              ? this.getNextPageUrl(nextResponse.headers.link)
+              : null;
           }
 
           response.data = allData;
@@ -209,17 +220,38 @@ export class CanvasClient {
   // ---------------------
   // COURSES (Enhanced)
   // ---------------------
-  async listCourses(includeEnded: boolean = false): Promise<CanvasCourse[]> {
+  async listCourses(options: {
+    includeEnded?: boolean;
+    limit?: number;
+    enrollmentState?: string;
+  } | boolean = {}): Promise<CanvasCourse[]> {
+    // Support legacy boolean signature
+    const opts = typeof options === 'boolean' ? { includeEnded: options } : options;
+    const { includeEnded = false, limit, enrollmentState } = opts;
     const params: any = {
       include: ['total_students', 'teachers', 'term', 'course_progress']
     };
-    
+
     if (!includeEnded) {
       params.state = ['available', 'completed'];
     }
 
+    if (enrollmentState) {
+      params.enrollment_state = enrollmentState;
+    }
+
+    if (limit) {
+      params.per_page = Math.min(limit, 100);
+    }
+
     const response = await this.client.get('/courses', { params });
-    return response.data;
+    let courses: CanvasCourse[] = response.data;
+
+    if (limit) {
+      courses = courses.slice(0, limit);
+    }
+
+    return courses;
   }
 
   async getCourse(courseId: number): Promise<CanvasCourse> {
