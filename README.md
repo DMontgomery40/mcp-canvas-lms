@@ -4,11 +4,21 @@
 
 This project is an independent MCP server for Canvas LMS APIs. It is not affiliated with, endorsed by, or maintained by Instructure or Canvas.
 
-During development in June 2025, I identified what I believed to be a Broken Access Control issue in a BootcampSpot/Canvas environment involving student-accessible course data. I reported the issue through Bugcrowd / Instructure responsible-disclosure channels. The report was later closed as “Not Applicable.”
+In June 2025, during development of this MCP, I identified a Broken Access Control issue in the Canvas environment at bootcampspot.instructure.com. The issue exposed personally identifiable information for other students enrolled in my course.
 
-This repository does not publish exploit steps, affected tenant details, live URLs, screenshots containing student data, or proof-of-concept abuse flows. This note is included only for project history and responsible-use context.
+I reported the issue through Bugcrowd on June 5, 2025, and also contacted Instructure / Canvas security channels directly. The Bugcrowd report was later closed as "Not Applicable." In subsequent correspondence, Instructure stated that the bootcampspot.instructure.com environment was outside its control.
 
-Separately, Instructure has publicly disclosed a 2026 Canvas security incident. This repository does not claim that the 2025 report caused, enabled, or is technically connected to that incident. 
+Public references:
+
+- Disclosure thread: https://www.reddit.com/r/cybersecurity/comments/1t6wmkw/reported_a_broken_access_control_bug_to/
+- Bugcrowd activity timeline: https://imgur.com/gallery/canvas-vuln-declared-n-11-months-ago-zYfHnBs
+- Later Instructure / BootcampSpot correspondence: https://imgur.com/a/BnhgXme
+
+This repository does not publish exploit steps, affected tenant details beyond what is already public, live URLs, screenshots containing student data, or proof-of-concept abuse flows.
+
+Separately, Instructure publicly disclosed a Canvas security incident in May 2026, and public reporting has linked the incident to ShinyHunters claims. This repository makes no claim that the June 2025 report caused, enabled, predicted, or is technically connected to the May 2026 incident.
+
+This disclosure is documented here for project history and transparency only.
 
 # What this is
 > A comprehensive Model Context Protocol (MCP) server for Canvas LMS with complete student, instructor, and account administration functionality
