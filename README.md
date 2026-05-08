@@ -1,5 +1,16 @@
 # Canvas MCP Server v2.3.0
 
+## Security and disclosure history
+
+This project is an independent MCP server for Canvas LMS APIs. It is not affiliated with, endorsed by, or maintained by Instructure or Canvas.
+
+During development in June 2025, I identified what I believed to be a Broken Access Control issue in a BootcampSpot/Canvas environment involving student-accessible course data. I reported the issue through Bugcrowd / Instructure responsible-disclosure channels. The report was later closed as “Not Applicable.”
+
+This repository does not publish exploit steps, affected tenant details, live URLs, screenshots containing student data, or proof-of-concept abuse flows. This note is included only for project history and responsible-use context.
+
+Separately, Instructure has publicly disclosed a 2026 Canvas security incident. This repository does not claim that the 2025 report caused, enabled, or is technically connected to that incident. 
+
+# What this is
 > A comprehensive Model Context Protocol (MCP) server for Canvas LMS with complete student, instructor, and account administration functionality
 
 ## 🚀 What's New in v2.3.0
