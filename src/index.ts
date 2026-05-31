@@ -60,7 +60,10 @@ const RAW_TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        include_ended: { type: "boolean", description: "Include ended courses" }
+        include_ended: { type: "boolean", description: "Include ended courses" },
+        limit: { type: "number", description: "Max number of courses to return (default: all)" },
+        enrollment_state: { type: "string", enum: ["active", "invited_or_pending", "completed"], description: "Filter by enrollment state" },
+        slim: { type: "boolean", description: "Return only id, name, course_code, term name, and workflow_state" }
       },
       required: []
     }
@@ -1302,8 +1305,17 @@ export class CanvasMCPServer {
 
           // Course management
           case "canvas_list_courses": {
-            const { include_ended = false } = args as { include_ended?: boolean };
-            const courses = await this.client.listCourses(include_ended);
+            const { include_ended = false, limit, enrollment_state, slim = false } = args as {
+              include_ended?: boolean; limit?: number; enrollment_state?: string; slim?: boolean;
+            };
+            const courses = await this.client.listCourses({ includeEnded: include_ended, limit, enrollmentState: enrollment_state });
+            if (slim) {
+              const slimCourses = courses.map(c => ({
+                id: c.id, name: c.name, course_code: c.course_code,
+                term: (c as any).term?.name, workflow_state: c.workflow_state
+              }));
+              return { content: [{ type: "text", text: JSON.stringify(slimCourses, null, 2) }] };
+            }
             return {
               content: [{ type: "text", text: this.serializeToolOutput(courses, includeRaw) }]
             };
