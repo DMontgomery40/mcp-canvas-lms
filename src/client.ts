@@ -1,6 +1,6 @@
 // src/client.ts
 
-import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import {
   CanvasCourse,
   CanvasAssignment,
@@ -101,7 +101,7 @@ export class CanvasClient {
 
           while (nextUrl && (!paginationLimit || allData.length < paginationLimit)) {
             console.error(`[Canvas API] GET ${nextUrl}`);
-            const nextResponse = await axios.get(nextUrl, paginationConfig);
+            const nextResponse = await this.fetchPaginatedPage(nextUrl, paginationConfig);
             allData = [...allData, ...nextResponse.data];
             nextUrl = nextResponse.headers.link
               ? this.getNextPageUrl(nextResponse.headers.link)
@@ -115,11 +115,11 @@ export class CanvasClient {
       },
       async (error: AxiosError) => {
         const config = error.config as any;
+        const retryCount = config?.__retryCount ?? 0;
         
         // Retry logic for specific errors
-        if (this.shouldRetry(error) && config && config.__retryCount < this.maxRetries) {
-          config.__retryCount = config.__retryCount || 0;
-          config.__retryCount++;
+        if (this.shouldRetry(error) && config && retryCount < this.maxRetries) {
+          config.__retryCount = retryCount + 1;
           
           const delay = this.retryDelay * Math.pow(2, config.__retryCount - 1); // Exponential backoff
           console.error(`[Canvas API] Retrying request (${config.__retryCount}/${this.maxRetries}) after ${delay}ms`);
@@ -128,56 +128,32 @@ export class CanvasClient {
           return this.client.request(config);
         }
 
-        // Transform error with better handling for non-JSON responses
-        if (error.response) {
-          const { status, data, headers } = error.response;
-          const contentType = headers?.['content-type'] || 'unknown';
-          console.error(`[Canvas API] Error response: ${status}, Content-Type: ${contentType}, Data type: ${typeof data}`);
-          
-          let errorMessage: string;
-          
-          try {
-            // Check if data is already a string (HTML error pages, plain text, etc.)
-            if (typeof data === 'string') {
-              errorMessage = data.length > 200 ? data.substring(0, 200) + '...' : data;
-            } else if (data && typeof data === 'object') {
-              // Handle structured Canvas API error responses
-              if ((data as any)?.message) {
-                errorMessage = (data as any).message;
-              } else if ((data as any)?.errors && Array.isArray((data as any).errors)) {
-                errorMessage = (data as any).errors.map((err: any) => err.message || err).join(', ');
-              } else {
-                errorMessage = JSON.stringify(data);
-              }
-            } else {
-              errorMessage = String(data);
-            }
-          } catch (jsonError) {
-            // Fallback if JSON operations fail
-            errorMessage = String(data);
-          }
-          
-          throw new CanvasAPIError(
-            `Canvas API Error (${status}): ${errorMessage}`, 
-            status, 
-            data
-          );
-        }
-        
-        // Handle network errors or other issues
-        if (error.request) {
-          console.error('[Canvas API] Network error - no response received:', error.message);
-          throw new CanvasAPIError(
-            `Network error: ${error.message}`,
-            0,
-            null
-          );
-        }
-        
-        console.error('[Canvas API] Unexpected error:', error.message);
-        throw error;
+        this.throwCanvasAPIError(error);
       }
     );
+  }
+
+  private async fetchPaginatedPage(url: string, config: AxiosRequestConfig): Promise<AxiosResponse<unknown[]>> {
+    let retryCount = 0;
+
+    while (true) {
+      try {
+        return await axios.get(url, config);
+      } catch (error) {
+        const axiosError = error as AxiosError;
+
+        if (this.shouldRetry(axiosError) && retryCount < this.maxRetries) {
+          retryCount++;
+          const delay = this.retryDelay * Math.pow(2, retryCount - 1);
+          console.error(`[Canvas API] Retrying pagination request (${retryCount}/${this.maxRetries}) after ${delay}ms`);
+
+          await this.sleep(delay);
+          continue;
+        }
+
+        this.throwCanvasAPIError(axiosError);
+      }
+    }
   }
 
   private shouldRetry(error: AxiosError): boolean {
@@ -189,6 +165,57 @@ export class CanvasClient {
 
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private throwCanvasAPIError(error: AxiosError): never {
+    // Transform error with better handling for non-JSON responses
+    if (error.response) {
+      const { status, data, headers } = error.response;
+      const contentType = headers?.['content-type'] || 'unknown';
+      console.error(`[Canvas API] Error response: ${status}, Content-Type: ${contentType}, Data type: ${typeof data}`);
+
+      let errorMessage: string;
+
+      try {
+        // Check if data is already a string (HTML error pages, plain text, etc.)
+        if (typeof data === 'string') {
+          errorMessage = data.length > 200 ? data.substring(0, 200) + '...' : data;
+        } else if (data && typeof data === 'object') {
+          // Handle structured Canvas API error responses
+          if ((data as any)?.message) {
+            errorMessage = (data as any).message;
+          } else if ((data as any)?.errors && Array.isArray((data as any).errors)) {
+            errorMessage = (data as any).errors.map((err: any) => err.message || err).join(', ');
+          } else {
+            errorMessage = JSON.stringify(data);
+          }
+        } else {
+          errorMessage = String(data);
+        }
+      } catch (jsonError) {
+        // Fallback if JSON operations fail
+        errorMessage = String(data);
+      }
+
+      throw new CanvasAPIError(
+        `Canvas API Error (${status}): ${errorMessage}`,
+        status,
+        data
+      );
+    }
+
+    // Handle network errors or other issues
+    if (error.request) {
+      console.error('[Canvas API] Network error - no response received:', error.message);
+      throw new CanvasAPIError(
+        `Network error: ${error.message}`,
+        0,
+        null
+      );
+    }
+
+    console.error('[Canvas API] Unexpected error:', error.message);
+    throw error;
   }
 
   private getNextPageUrl(linkHeader: string): string | null {

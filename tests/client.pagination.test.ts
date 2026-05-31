@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "axios";
 import { CanvasClient } from "../src/client.js";
+import { CanvasAPIError } from "../src/types.js";
 
 vi.mock("axios", () => {
   const mockedAxios = {
@@ -43,6 +44,19 @@ function paginatedResponse(
   };
 }
 
+function canvasApiAxiosError(status: number, data: any): any {
+  return {
+    message: `Request failed with status code ${status}`,
+    response: {
+      status,
+      data,
+      headers: {
+        "content-type": "application/json",
+      },
+    },
+  };
+}
+
 describe("CanvasClient pagination", () => {
   let client: CanvasClient;
   let responseHandler: ResponseHandler;
@@ -77,7 +91,9 @@ describe("CanvasClient pagination", () => {
 
     vi.mocked(axios.create).mockReturnValue(mockInstance as any);
     vi.mocked(axios.get).mockReset();
-    client = new CanvasClient("test-token", "canvas.example.edu");
+    client = new CanvasClient("test-token", "canvas.example.edu", {
+      retryDelay: 0,
+    });
   });
 
   it("passes listCourses limit into both Canvas per_page and the paginator cap", async () => {
@@ -145,5 +161,50 @@ describe("CanvasClient pagination", () => {
 
     expect(axios.get).toHaveBeenCalledTimes(2);
     expect(result.data).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
+  });
+
+  it("wraps non-retryable paginated page failures as CanvasAPIError", async () => {
+    const page2Url = "https://canvas.example.edu/api/v1/courses?page=2";
+    vi.mocked(axios.get).mockRejectedValueOnce(
+      canvasApiAxiosError(401, { message: "Unauthorized" }),
+    );
+
+    let error: unknown;
+    try {
+      await responseHandler(paginatedResponse([{ id: 1 }], page2Url));
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toBeInstanceOf(CanvasAPIError);
+    expect(error).toMatchObject({
+      message: "Canvas API Error (401): Unauthorized",
+      statusCode: 401,
+      response: { message: "Unauthorized" },
+    });
+  });
+
+  it("retries transient paginated page failures before returning data", async () => {
+    const page2Url = "https://canvas.example.edu/api/v1/courses?page=2";
+    vi.mocked(axios.get)
+      .mockRejectedValueOnce(
+        canvasApiAxiosError(500, { message: "Server error" }),
+      )
+      .mockResolvedValueOnce(paginatedResponse([{ id: 2 }]));
+
+    const result = await responseHandler(
+      paginatedResponse([{ id: 1 }], page2Url),
+    );
+
+    expect(axios.get).toHaveBeenCalledTimes(2);
+    expect(axios.get).toHaveBeenNthCalledWith(1, page2Url, {
+      headers: authHeaders,
+      timeout: 30000,
+    });
+    expect(axios.get).toHaveBeenNthCalledWith(2, page2Url, {
+      headers: authHeaders,
+      timeout: 30000,
+    });
+    expect(result.data).toEqual([{ id: 1 }, { id: 2 }]);
   });
 });
