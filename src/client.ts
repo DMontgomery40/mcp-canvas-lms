@@ -1,8 +1,8 @@
 // src/client.ts
 
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
-import { 
-  CanvasCourse, 
+import {
+  CanvasCourse,
   CanvasAssignment,
   CanvasSubmission,
   CanvasUser,
@@ -40,6 +40,10 @@ import {
   ListAccountCoursesArgs,
   ListAccountUsersArgs
 } from './types.js';
+
+type PaginatedRequestConfig = AxiosRequestConfig & {
+  paginationLimit?: number;
+};
 
 export class CanvasClient {
   private client: AxiosInstance;
@@ -89,15 +93,13 @@ export class CanvasClient {
         if (Array.isArray(data) && linkHeader && contentType.includes('application/json')) {
           let allData = [...data];
           let nextUrl = this.getNextPageUrl(linkHeader);
+          const paginationLimit = (response.config as PaginatedRequestConfig).paginationLimit;
           const paginationConfig: AxiosRequestConfig = {
-            headers: {
-              'Authorization': response.config.headers['Authorization'] as string,
-              'Content-Type': 'application/json'
-            },
-            timeout: 30000
+            headers: response.config.headers,
+            timeout: response.config.timeout ?? 30000
           };
 
-          while (nextUrl) {
+          while (nextUrl && (!paginationLimit || allData.length < paginationLimit)) {
             console.error(`[Canvas API] GET ${nextUrl}`);
             const nextResponse = await axios.get(nextUrl, paginationConfig);
             allData = [...allData, ...nextResponse.data];
@@ -106,7 +108,7 @@ export class CanvasClient {
               : null;
           }
 
-          response.data = allData;
+          response.data = paginationLimit ? allData.slice(0, paginationLimit) : allData;
         }
 
         return response;
@@ -228,6 +230,14 @@ export class CanvasClient {
     // Support legacy boolean signature
     const opts = typeof options === 'boolean' ? { includeEnded: options } : options;
     const { includeEnded = false, limit, enrollmentState } = opts;
+    const paginationLimit = typeof limit === 'number' && Number.isFinite(limit)
+      ? Math.max(0, Math.floor(limit))
+      : undefined;
+
+    if (paginationLimit === 0) {
+      return [];
+    }
+
     const params: any = {
       include: ['total_students', 'teachers', 'term', 'course_progress']
     };
@@ -240,18 +250,15 @@ export class CanvasClient {
       params.enrollment_state = enrollmentState;
     }
 
-    if (limit) {
-      params.per_page = Math.min(limit, 100);
+    if (paginationLimit) {
+      params.per_page = Math.min(paginationLimit, 100);
     }
 
-    const response = await this.client.get('/courses', { params });
-    let courses: CanvasCourse[] = response.data;
-
-    if (limit) {
-      courses = courses.slice(0, limit);
-    }
-
-    return courses;
+    const response = await this.client.get('/courses', {
+      params,
+      paginationLimit
+    } as PaginatedRequestConfig);
+    return response.data;
   }
 
   async getCourse(courseId: number): Promise<CanvasCourse> {
